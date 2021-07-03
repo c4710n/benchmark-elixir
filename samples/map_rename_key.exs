@@ -1,5 +1,6 @@
 list = Enum.to_list(1..10_000)
-maps = Enum.map(list, fn i -> %{name: "name#{i}", count: i} end)
+
+map_fun = fn i -> %{name: "name#{i}", count: i} end
 
 defmodule Teo do
   def rename_key1(enumerable, {key, new_key}) do
@@ -30,14 +31,21 @@ defmodule Teo do
   end
 end
 
-Benchee.run(%{
-  "Map.delete & Map.put" => fn ->
-    Teo.rename_key1(maps, {:count, :sum})
-  end,
-  "Map.pop & Map.put" => fn ->
-    Teo.rename_key2(maps, {:count, :sum})
-  end,
-  "Map.new" => fn ->
-    Teo.rename_key3(maps, {:count, :sum})
-  end
-})
+Benchee.run(
+  %{
+    "Map.delete & Map.put" => fn input ->
+      Teo.rename_key1(input, {:count, :sum})
+    end,
+    "Map.pop & Map.put" => fn input ->
+      Teo.rename_key2(input, {:count, :sum})
+    end,
+    "Map.new" => fn input ->
+      Teo.rename_key3(input, {:count, :sum})
+    end
+  },
+  inputs: %{
+    "Small" => Enum.to_list(1..1_000) |> Enum.map(map_fun),
+    "Medium" => Enum.to_list(1..10_000) |> Enum.map(map_fun),
+    "Large" => Enum.to_list(1..100_000) |> Enum.map(map_fun)
+  }
+)
