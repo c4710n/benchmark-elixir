@@ -1,5 +1,5 @@
 # BENCHMARK RESULT #
-#
+
 # Operating System: macOS
 # CPU Information: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
 # Number of Available Cores: 12
@@ -15,22 +15,30 @@
 # inputs: none specified
 # Estimated total run time: 21 s
 
-# Benchmarking empty...
-# Benchmarking ~m...
 # Benchmarking ~M...
+# Benchmarking ~m...
+# Warning: The function you are trying to benchmark is super fast, making measurements more unreliable!
+# This holds especially true for memory measurements.
+# See: https://github.com/PragTob/benchee/wiki/Benchee-Warnings#fast-execution-warning
 
-# Name            ips        average  deviation         median         99th %
-# empty       46.66 M       21.43 ns  ±1384.47%           0 ns          90 ns
-# ~m           7.79 M      128.32 ns   ±323.87%           0 ns         990 ns
-# ~M           0.23 M     4335.94 ns   ±373.14%        3990 ns        6990 ns
+# You may disable this warning by passing print: [fast_warning: false] as configuration options.
+
+# Benchmarking ~x...
+
+# Name           ips        average  deviation         median         99th %
+# ~m         95.47 M       10.47 ns   ±241.07%          10 ns          20 ns
+# ~x          3.68 M      271.70 ns  ±8634.89%           0 ns        1000 ns
+# ~M          0.23 M     4322.70 ns   ±380.97%        4000 ns        9000 ns
 
 # Comparison:
-# empty       46.66 M
-# ~m           7.79 M - 5.99x slower +106.89 ns
-# ~M           0.23 M - 202.31x slower +4314.51 ns
+# ~m         95.47 M
+# ~x          3.68 M - 25.94x slower +261.23 ns
+# ~M          0.23 M - 412.71x slower +4312.23 ns
 
 # CONCLUSION #
-# + merging classes via macro is faster.
+
+# + ~m is the fastest, but it doesn't support string interpolation, which make it useless.
+# + ~x is slower than ~m, but it supports string interpolation.
 
 defmodule Teo do
   @moduledoc """
@@ -56,6 +64,16 @@ defmodule Teo do
     |> String.split(~r/\s+/)
     |> Enum.join(" ")
   end
+
+  @doc """
+  Merging classes via wrapped ~w.
+  """
+  defmacro sigil_x(term, modifiers) do
+    quote do
+      Kernel.sigil_w(unquote(term), unquote(modifiers))
+      |> Enum.join(" ")
+    end
+  end
 end
 
 defmodule Benchmark do
@@ -63,14 +81,14 @@ defmodule Benchmark do
 
   def run() do
     Benchee.run(%{
-      "empty" => fn ->
-        nil
-      end,
       "~m" => fn ->
         ~m(bg-black text-green-500)
       end,
       "~M" => fn ->
         ~M(bg-black text-green-500)
+      end,
+      "~x" => fn ->
+        ~x(bg-black text-green-500)
       end
     })
   end
